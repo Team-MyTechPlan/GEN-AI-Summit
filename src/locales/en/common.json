@@ -4,10 +4,14 @@
     "description": "The page you are looking for does not exist."
   },
   "Home": {
-    "title": "Home",
-    "description": "Welcome to the home page.",
-    "variable": "Variable: {success}, {error}",
-    "success": "Success: {success}",
-    "error": "Error: {error}"
+    "pageTitle": "Welcome to our Website",
+    "title": "Hello, World!",
+    "description": "This is an example of internationalization.",
+    "variable": "Operation status: {status}",
+    "success": "Success",
+    "switchLanguage": "Switch to {language}",
+    "spanish": "Spanish",
+    "english": "English",
+    "footer": "© 2024 Our Company"
   }
 }

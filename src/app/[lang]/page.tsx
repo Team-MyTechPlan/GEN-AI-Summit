@@ -1,28 +1,21 @@
 "use client";
-
 import { useTranslations } from "@/context/TranslationContext";
+import { useLanguageStore } from "@/hooks/useLanguageStore";
 
-export default function Home() {
-  const t = useTranslations("Home");
-
-  // Simulando variables de éxito y error
-  const success = { message: "Operation successful" };
-  const error = { message: "An error occurred" };
-
-  console.log("Home title translation:", t("title"));
+export default function ExampleComponent() {
+  const t = useTranslations();
+  const { locale } = useLanguageStore();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div>{t("title")}</div>
-      <p>{t("description")}</p>
+    <div>
+      <h1>{t("Home.title")}</h1>
+      <p>{t("Home.description")}</p>
+      <p>{t("Home.variable", { status: t("Home.success") })}</p>
       <p>
-        {t("variable", {
-          success: success.message,
-          error: error.message,
+        {t("Home.switchLanguage", {
+          language: locale === "en" ? t("Home.spanish") : t("Home.english"),
         })}
       </p>
-      <p>{t("success", { success: success.message })}</p>
-      <p>{t("error", { error: error.message })}</p>
-    </main>
+    </div>
   );
 }

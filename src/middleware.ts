@@ -6,59 +6,55 @@ const DEFAULT_LOCALE = "es";
 const SUPPORTED_LOCALES = ["es", "en"];
 const COOKIE_NAME = "NEXT_LOCALE";
 
-async function loadTranslations(locale: string): Promise<Translations> {
-  try {
-    const translations = await import(`@/locales/${locale}/common.json`);
-    return { ...defaultTranslations, ...translations.default };
-  } catch (error) {
-    console.error(`Failed to load translations for ${locale}:`, error);
-    return defaultTranslations;
-  }
-}
-
-function getLocaleFromPath(pathname: string): string | null {
-  const firstSegment = pathname.split("/")[1];
-  return SUPPORTED_LOCALES.includes(firstSegment) ? firstSegment : null;
-}
-
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const currentLocale = req.cookies.get(COOKIE_NAME)?.value || DEFAULT_LOCALE;
+  let currentLocale = req.cookies.get(COOKIE_NAME)?.value || DEFAULT_LOCALE;
+
+  console.log("Current cookie value:", currentLocale);
 
   // Exclude API routes, static files, and not-found page
   if (pathname.match(/^\/(?:api|_next|.*\..*)/) || pathname === "/not-found") {
     return NextResponse.next();
   }
 
-  // Handle root path
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL(`/${currentLocale}`, req.url));
-  }
-
   const pathLocale = getLocaleFromPath(pathname);
 
+  let response: NextResponse;
+
+  // Handle root path
+  if (pathname === "/") {
+    response = NextResponse.redirect(new URL(`/${currentLocale}`, req.url));
+  }
   // Handle paths with supported locale prefix
-  if (pathLocale) {
-    const response = NextResponse.next();
-    response.cookies.set(COOKIE_NAME, pathLocale, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      sameSite: "strict",
-    });
-
-    // Pre-load translations
-    const translations = await loadTranslations(pathLocale);
-
-    // Pass translations to the request object
-    const url = req.nextUrl.clone();
-    url.searchParams.set("translations", JSON.stringify(translations));
-
-    return NextResponse.rewrite(url);
+  else if (pathLocale) {
+    response = NextResponse.next();
+    currentLocale = pathLocale;
+  }
+  // Handle paths without locale prefix
+  else if (!pathLocale && pathname !== "/") {
+    const newPathname = `/${currentLocale}${pathname}`;
+    response = NextResponse.redirect(new URL(newPathname, req.url));
+  }
+  // For all other cases, proceed with the request
+  else {
+    response = NextResponse.next();
   }
 
-  // Handle paths without locale prefix
-  const newPathname = `/${currentLocale}${pathname}`;
-  return NextResponse.redirect(new URL(newPathname, req.url));
+  // Always set the cookie
+  response.cookies.set(COOKIE_NAME, currentLocale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    sameSite: "strict",
+  });
+
+  console.log("Setting cookie:", COOKIE_NAME, "to value:", currentLocale);
+
+  return response;
+}
+
+function getLocaleFromPath(pathname: string): string | null {
+  const firstSegment = pathname.split("/")[1];
+  return SUPPORTED_LOCALES.includes(firstSegment) ? firstSegment : null;
 }
 
 export const config = {

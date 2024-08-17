@@ -1,136 +1,67 @@
 "use client";
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  ReactNode,
-} from "react";
-import { getCookie, setCookie } from "cookies-next";
-import { Translations } from "@/types/translations";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useLanguageStore } from "@/hooks/useLanguageStore";
 
-type Locale = "en" | "es";
-type TranslationParams = Record<string, string | number>;
+type TranslationFunction = (
+  key: string,
+  params?: Record<string, string>
+) => string;
 
 interface TranslationContextType {
-  locale: Locale;
-  setLocale: (locale: Locale) => Promise<void>;
-  getTranslation: (
-    namespace: string
-  ) => (key: string, params?: TranslationParams) => string;
+  t: TranslationFunction;
 }
 
 const TranslationContext = createContext<TranslationContextType | undefined>(
   undefined
 );
 
-interface TranslationProviderProps {
-  children: ReactNode;
-  initialLocale: Locale;
-  initialMessages: Translations;
-}
-
-export const TranslationProvider: React.FC<TranslationProviderProps> = ({
-  children,
-  initialLocale,
-  initialMessages,
-}) => {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale);
-  const [messages, setMessages] = useState<Translations>(initialMessages);
-
-  const loadMessages = useCallback(
-    async (newLocale: Locale): Promise<Translations> => {
-      try {
-        console.log(`Loading messages for locale: ${newLocale}`);
-
-        // Usar importación dinámica para cargar el archivo JSON
-        const newMessages: Translations = await import(
-          `@/locales/${newLocale}/common.json`
-        ).then((module) => module.default);
-
-        console.log(`Loaded messages:`, newMessages);
-        setMessages(newMessages);
-        return newMessages;
-      } catch (error) {
-        console.error(`Failed to load messages for ${newLocale}:`, error);
-        return {} as Translations;
-      }
-    },
-    []
-  );
-
-  const setLocale = useCallback(
-    async (newLocale: Locale) => {
-      const newMessages = await loadMessages(newLocale);
-      setMessages(newMessages);
-      setLocaleState(newLocale);
-      setCookie("NEXT_LOCALE", newLocale, { maxAge: 365 * 24 * 60 * 60 });
-    },
-    [loadMessages]
-  );
+export const TranslationProvider: React.FC<{
+  children: React.ReactNode;
+  loadTranslations: (locale: string) => Promise<Record<string, any>>;
+}> = ({ children, loadTranslations }) => {
+  const { locale } = useLanguageStore();
+  const [translations, setTranslations] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const savedLocale = getCookie("NEXT_LOCALE") as Locale | undefined;
-    if (savedLocale && savedLocale !== locale) {
-      void setLocale(savedLocale);
+    loadTranslations(locale).then(setTranslations);
+  }, [locale, loadTranslations]);
+
+  const t: TranslationFunction = (key, params) => {
+    const keys = key.split(".");
+    let current: any = translations;
+    for (const k of keys) {
+      if (current[k] === undefined) {
+        console.warn(`Missing translation: ${key}`);
+        return key;
+      }
+      current = current[k];
     }
-  }, [locale, setLocale]);
-
-  const getTranslation = useCallback(
-    (namespace: string) =>
-      (key: string, params?: TranslationParams): string => {
-        const parts = namespace.split(".");
-        let current: any = messages;
-
-        for (const part of parts) {
-          if (!current[part]) {
-            console.warn(`Missing translation: ${namespace}.${key}`);
-            return `${namespace}.${key}`;
-          }
-          current = current[part];
-        }
-
-        // Verifica que 'current' sea el objeto final esperado
-        if (current && typeof current === "object") {
-          console.log("Final object to search in:", current);
-
-          let translation = current[key];
-          if (typeof translation !== "string") {
-            console.warn(`Missing translation: ${namespace}.${key}`);
-            return `${namespace}.${key}`;
-          }
-
-          if (params) {
-            Object.entries(params).forEach(([paramKey, paramValue]) => {
-              translation = translation.replace(
-                new RegExp(`{${paramKey}}`, "g"),
-                String(paramValue)
-              );
-            });
-          }
-          return translation;
-        } else {
-          console.warn(`Missing translation: ${namespace}.${key}`);
-          return `${namespace}.${key}`;
-        }
-      },
-    [messages]
-  );
+    if (typeof current !== "string") {
+      console.warn(`Invalid translation key: ${key}`);
+      return key;
+    }
+    if (params) {
+      return Object.entries(params).reduce(
+        (acc, [key, value]) => acc.replace(`{${key}}`, value),
+        current
+      );
+    }
+    return current;
+  };
 
   return (
-    <TranslationContext.Provider value={{ locale, setLocale, getTranslation }}>
+    <TranslationContext.Provider value={{ t }}>
       {children}
     </TranslationContext.Provider>
   );
 };
 
-export const useTranslations = (namespace: string) => {
+export const useTranslations = () => {
   const context = useContext(TranslationContext);
   if (context === undefined) {
     throw new Error(
       "useTranslations must be used within a TranslationProvider"
     );
   }
-  return context.getTranslation(namespace);
+  return context.t;
 };

@@ -1,50 +1,42 @@
+"use client";
+import { useEffect } from "react";
+import { useLanguageStore } from "@/hooks/useLanguageStore";
 import { TranslationProvider } from "@/context/TranslationContext";
-import { Translations } from "@/types/translations";
-import defaultTranslations from "@/lib/utils/defaultTranslations";
+import { getCookie } from "cookies-next";
+import { LanguageSwitchButton } from "@/components/shared/LanguageSwitchButton";
 
-export default async function RootLayout({
+async function loadTranslations(locale: string) {
+  try {
+    const translations = await import(`@/locales/${locale}/common.json`);
+    return translations.default;
+  } catch (error) {
+    console.error(`Failed to load translations for ${locale}:`, error);
+    return {};
+  }
+}
+
+export default function RootLayout({
   children,
-  params: { lang },
 }: {
   children: React.ReactNode;
-  params: { lang: string };
 }) {
-  const locale = ["en", "es"].includes(lang) ? (lang as "en" | "es") : "en";
+  const { locale, setLocale } = useLanguageStore();
 
-  console.log(`Selected locale: ${locale}`);
-
-  let messages: Translations = defaultTranslations;
-  try {
-    // Intenta analizar las traducciones precargadas desde la URL
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      const preloadedTranslations = searchParams.get("translations");
-      if (preloadedTranslations) {
-        const parsedTranslations = JSON.parse(preloadedTranslations);
-        messages = { ...defaultTranslations, ...parsedTranslations };
-      }
+  useEffect(() => {
+    const savedLocale = getCookie("NEXT_LOCALE") as "en" | "es" | undefined;
+    if (savedLocale && (savedLocale === "en" || savedLocale === "es")) {
+      setLocale(savedLocale);
     }
-
-    // Si no hay traducciones precargadas, intenta importarlas
-    if (Object.keys(messages).length === 0) {
-      const importedTranslations = await import(
-        `@/locales/${locale}/common.json`
-      ).then((module) => module.default);
-      messages = { ...defaultTranslations, ...importedTranslations };
-    }
-
-    console.log(`Loaded messages for ${locale}:`, messages);
-  } catch (error) {
-    console.error(`Failed to load initial messages for ${locale}:`, error);
-    // Usa las traducciones predeterminadas en caso de error
-    messages = defaultTranslations;
-  }
+  }, [setLocale]);
 
   return (
     <html lang={locale}>
       <body>
-        <TranslationProvider initialLocale={locale} initialMessages={messages}>
-          {children}
+        <TranslationProvider loadTranslations={loadTranslations}>
+          <header>
+            <LanguageSwitchButton />
+          </header>
+          <main>{children}</main>
         </TranslationProvider>
       </body>
     </html>

@@ -4,10 +4,14 @@
     "description": "La página que buscas no existe."
   },
   "Home": {
-    "title": "Inicio",
-    "description": "Bienvenido a la página de inicio.",
-    "variable": "Variable: {success}, {error}",
-    "success": "Success: {success}",
-    "error": "Error: {error}"
+    "pageTitle": "Bienvenido a nuestro Sitio Web",
+    "title": "¡Hola, Mundo!",
+    "description": "Este es un ejemplo de internacionalización.",
+    "variable": "Estado de la operación: {status}",
+    "success": "Éxito",
+    "switchLanguage": "Cambiar a {language}",
+    "spanish": "Español",
+    "english": "Inglés",
+    "footer": "© 2024 Nuestra Empresa"
   }
 }
