@@ -43,11 +43,12 @@ export const TranslationProvider: React.FC<TranslationProviderProps> = ({
     async (newLocale: Locale): Promise<Translations> => {
       try {
         console.log(`Loading messages for locale: ${newLocale}`);
-        const response = await fetch(`/locales/${newLocale}/common.json`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const newMessages = await response.json();
+
+        // Usar importación dinámica para cargar el archivo JSON
+        const newMessages: Translations = await import(
+          `@/locales/${newLocale}/common.json`
+        ).then((module) => module.default);
+
         console.log(`Loaded messages:`, newMessages);
         setMessages(newMessages);
         return newMessages;

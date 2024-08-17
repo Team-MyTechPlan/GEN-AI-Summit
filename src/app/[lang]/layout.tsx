@@ -1,4 +1,6 @@
 import { TranslationProvider } from "@/context/TranslationContext";
+import fs from "fs";
+import path from "path";
 
 export default async function RootLayout({
   children,
@@ -13,17 +15,16 @@ export default async function RootLayout({
 
   let messages;
   try {
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/locales/${locale}/common.json`;
-    console.log(`Fetching translations from: ${url}`);
+    // Usar el alias '@' para construir la ruta del archivo JSON
+    const filePath = path.resolve(
+      process.cwd(),
+      `src/locales/${locale}/common.json`
+    );
+    console.log(`Loading translations from: ${filePath}`);
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch translations. HTTP status: ${response.status}`
-      );
-    }
-
-    messages = await response.json();
+    // Leer el archivo JSON directamente desde el sistema de archivos
+    const fileContents = fs.readFileSync(filePath, "utf8");
+    messages = JSON.parse(fileContents);
     console.log(`Loaded messages for ${locale}:`, messages);
   } catch (error) {
     console.error(`Failed to load initial messages for ${locale}:`, error);
