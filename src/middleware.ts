@@ -22,7 +22,11 @@ export function middleware(req: NextRequest) {
   const currentLocale = req.cookies.get(COOKIE_NAME)?.value || DEFAULT_LOCALE;
 
   // Exclude API routes, static files, and not-found page
-  if (pathname.match(/^\/(?:api|_next|.*\..*)/) || pathname === "/not-found") {
+  if (
+    pathname.match(/^\/(?:api|_next|.*\..*)/) ||
+    pathname.startsWith("/locales") || // Excluye las rutas de locales
+    pathname === "/not-found"
+  ) {
     return NextResponse.next();
   }
 
@@ -46,5 +50,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/", "/((?!api|_next/static|_next/image|favicon.ico|locales/).*)"],
 };
