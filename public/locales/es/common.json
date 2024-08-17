@@ -1,6 +1,10 @@
 {
   "NotFound": {
-    "title": "Page not found",
-    "description": "The page you are looking for does not exist."
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe."
+  },
+  "Home": {
+    "title": "Inicio",
+    "description": "Bienvenido a la página de inicio."
   }
 }

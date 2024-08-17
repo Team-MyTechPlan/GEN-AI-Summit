@@ -1,47 +1,35 @@
-import type { Metadata } from "next";
-import "@/app/styles/globals.css";
-
-const locales = ["en", "es"] as const;
-type Locale = (typeof locales)[number];
-
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
-
-export async function generateMetadata({
-  params: { locale },
-}: {
-  params: { locale: string };
-}): Promise<Metadata> {
-  return {
-    title: "Plataforma INSIDERS | INSIDE HAIR",
-    description:
-      "En INSIDE HAIR nos dedicamos a ayudar a managers de Peluquería a conseguir sus objetivos en consultoría, formación y Marketing para salones de Peluquería.",
-  };
-}
+import { TranslationProvider } from "@/context/TranslationContext";
 
 export default async function RootLayout({
   children,
-  params: { locale },
+  params: { lang },
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: { lang: string };
 }) {
-  if (!locales.includes(locale as Locale)) locale = "es"; // default to Spanish if locale is invalid
+  const locale = ["en", "es"].includes(lang) ? (lang as "en" | "es") : "en";
 
   let messages;
   try {
-    messages = await import(`@/public/locales/${locale}/common.json`).then(
-      (module) => module.default
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/locales/${locale}/common.json`
     );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    messages = await response.json();
   } catch (error) {
-    console.error(`Failed to load messages for locale ${locale}:`, error);
-    messages = {}; // Provide empty object as fallback
+    console.error(`Failed to load initial messages for ${locale}:`, error);
+    messages = {};
   }
 
   return (
     <html lang={locale}>
-      <body>{children}</body>
+      <body>
+        <TranslationProvider initialLocale={locale} initialMessages={messages}>
+          {children}
+        </TranslationProvider>
+      </body>
     </html>
   );
 }
