@@ -6,6 +6,9 @@ export interface Translations {
   Home: {
     title: string;
     description: string;
+    variable: string;
+    success: string;
+    error: string;
   };
 }
 

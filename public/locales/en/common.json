@@ -5,6 +5,9 @@
   },
   "Home": {
     "title": "Home",
-    "description": "Welcome to the home page."
+    "description": "Welcome to the home page.",
+    "variable": "Variable: {success}, {error}",
+    "success": "Success: {success}",
+    "error": "Error: {error}"
   }
 }

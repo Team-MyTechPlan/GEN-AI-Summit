@@ -9,15 +9,22 @@ export default async function RootLayout({
 }) {
   const locale = ["en", "es"].includes(lang) ? (lang as "en" | "es") : "en";
 
+  console.log(`Selected locale: ${locale}`);
+
   let messages;
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/locales/${locale}/common.json`
-    );
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/locales/${locale}/common.json`;
+    console.log(`Fetching translations from: ${url}`);
+
+    const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(
+        `Failed to fetch translations. HTTP status: ${response.status}`
+      );
     }
+
     messages = await response.json();
+    console.log(`Loaded messages for ${locale}:`, messages);
   } catch (error) {
     console.error(`Failed to load initial messages for ${locale}:`, error);
     messages = {};

@@ -8,19 +8,17 @@ import React, {
   ReactNode,
 } from "react";
 import { getCookie, setCookie } from "cookies-next";
+import { Translations } from "@/types/translations";
 
 type Locale = "en" | "es";
-type TranslationKey = string;
 type TranslationParams = Record<string, string | number>;
-
-interface Translations {
-  [key: string]: string | Translations;
-}
 
 interface TranslationContextType {
   locale: Locale;
   setLocale: (locale: Locale) => Promise<void>;
-  t: (key: TranslationKey, params?: TranslationParams) => string;
+  getTranslation: (
+    namespace: string
+  ) => (key: string, params?: TranslationParams) => string;
 }
 
 const TranslationContext = createContext<TranslationContextType | undefined>(
@@ -44,16 +42,18 @@ export const TranslationProvider: React.FC<TranslationProviderProps> = ({
   const loadMessages = useCallback(
     async (newLocale: Locale): Promise<Translations> => {
       try {
+        console.log(`Loading messages for locale: ${newLocale}`);
         const response = await fetch(`/locales/${newLocale}/common.json`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const newMessages = await response.json();
-        console.log(`Loaded messages for ${newLocale}:`, newMessages);
+        console.log(`Loaded messages:`, newMessages);
+        setMessages(newMessages);
         return newMessages;
       } catch (error) {
         console.error(`Failed to load messages for ${newLocale}:`, error);
-        return {};
+        return {} as Translations;
       }
     },
     []
@@ -76,46 +76,60 @@ export const TranslationProvider: React.FC<TranslationProviderProps> = ({
     }
   }, [locale, setLocale]);
 
-  const t = useCallback(
-    (key: TranslationKey, params?: TranslationParams): string => {
-      const keys = key.split(".");
-      let current: any = messages;
-      for (const k of keys) {
-        if (current[k] === undefined) {
-          console.warn(`Missing translation: ${key}`);
-          return key;
+  const getTranslation = useCallback(
+    (namespace: string) =>
+      (key: string, params?: TranslationParams): string => {
+        const parts = namespace.split(".");
+        let current: any = messages;
+
+        for (const part of parts) {
+          if (!current[part]) {
+            console.warn(`Missing translation: ${namespace}.${key}`);
+            return `${namespace}.${key}`;
+          }
+          current = current[part];
         }
-        current = current[k];
-      }
-      if (typeof current !== "string") {
-        console.warn(`Invalid translation for key: ${key}`);
-        return key;
-      }
-      let translation = current;
-      if (params) {
-        Object.entries(params).forEach(([paramKey, paramValue]) => {
-          translation = translation.replace(
-            new RegExp(`{${paramKey}}`, "g"),
-            String(paramValue)
-          );
-        });
-      }
-      return translation;
-    },
+
+        // Verifica que 'current' sea el objeto final esperado
+        if (current && typeof current === "object") {
+          console.log("Final object to search in:", current);
+
+          let translation = current[key];
+          if (typeof translation !== "string") {
+            console.warn(`Missing translation: ${namespace}.${key}`);
+            return `${namespace}.${key}`;
+          }
+
+          if (params) {
+            Object.entries(params).forEach(([paramKey, paramValue]) => {
+              translation = translation.replace(
+                new RegExp(`{${paramKey}}`, "g"),
+                String(paramValue)
+              );
+            });
+          }
+          return translation;
+        } else {
+          console.warn(`Missing translation: ${namespace}.${key}`);
+          return `${namespace}.${key}`;
+        }
+      },
     [messages]
   );
 
   return (
-    <TranslationContext.Provider value={{ locale, setLocale, t }}>
+    <TranslationContext.Provider value={{ locale, setLocale, getTranslation }}>
       {children}
     </TranslationContext.Provider>
   );
 };
 
-export const useTranslation = () => {
+export const useTranslations = (namespace: string) => {
   const context = useContext(TranslationContext);
   if (context === undefined) {
-    throw new Error("useTranslation must be used within a TranslationProvider");
+    throw new Error(
+      "useTranslations must be used within a TranslationProvider"
+    );
   }
-  return context;
+  return context.getTranslation(namespace);
 };
