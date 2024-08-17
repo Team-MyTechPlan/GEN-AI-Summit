@@ -1,6 +1,6 @@
 import { TranslationProvider } from "@/context/TranslationContext";
-import fs from "fs";
-import path from "path";
+import { Translations } from "@/types/translations";
+import defaultTranslations from "@/lib/utils/defaultTranslations";
 
 export default async function RootLayout({
   children,
@@ -13,22 +13,31 @@ export default async function RootLayout({
 
   console.log(`Selected locale: ${locale}`);
 
-  let messages;
+  let messages: Translations = defaultTranslations;
   try {
-    // Usar el alias '@' para construir la ruta del archivo JSON
-    const filePath = path.resolve(
-      process.cwd(),
-      `src/locales/${locale}/common.json`
-    );
-    console.log(`Loading translations from: ${filePath}`);
+    // Intenta analizar las traducciones precargadas desde la URL
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const preloadedTranslations = searchParams.get("translations");
+      if (preloadedTranslations) {
+        const parsedTranslations = JSON.parse(preloadedTranslations);
+        messages = { ...defaultTranslations, ...parsedTranslations };
+      }
+    }
 
-    // Leer el archivo JSON directamente desde el sistema de archivos
-    const fileContents = fs.readFileSync(filePath, "utf8");
-    messages = JSON.parse(fileContents);
+    // Si no hay traducciones precargadas, intenta importarlas
+    if (Object.keys(messages).length === 0) {
+      const importedTranslations = await import(
+        `@/locales/${locale}/common.json`
+      ).then((module) => module.default);
+      messages = { ...defaultTranslations, ...importedTranslations };
+    }
+
     console.log(`Loaded messages for ${locale}:`, messages);
   } catch (error) {
     console.error(`Failed to load initial messages for ${locale}:`, error);
-    messages = {};
+    // Usa las traducciones predeterminadas en caso de error
+    messages = defaultTranslations;
   }
 
   return (
