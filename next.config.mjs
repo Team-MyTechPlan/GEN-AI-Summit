@@ -1,3 +1,10 @@
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import fs from "fs/promises";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -11,11 +18,23 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      require("fs").cpSync("src/locales", "public/locales", {
-        recursive: true,
-      });
+      copyLocales();
     }
     return config;
   },
 };
+
+async function copyLocales() {
+  try {
+    await fs.cp(
+      join(__dirname, "src", "locales"),
+      join(__dirname, "public", "locales"),
+      { recursive: true }
+    );
+    console.log("Locales copied successfully");
+  } catch (error) {
+    console.error("Error copying locales:", error);
+  }
+}
+
 export default nextConfig;
