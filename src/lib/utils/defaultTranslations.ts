@@ -1,18 +1,26 @@
 import { Translations } from "@/types/translations";
 
 const defaultTranslations: Translations = {
+  Common: {
+    switchLanguage: "Switch to {language}",
+    spanish: "Spanish",
+    english: "English",
+  },
   NotFound: {
-    title: "Not Found",
-    description: "The page you're looking for doesn't exist.",
+    title: "Página no encontrada",
+    description: "La página que buscas no existe.",
   },
   Home: {
-    title: "Home",
-    description: "Welcome to the homepage.",
-    variable: "Operation successful, An error occurred",
-    success: "Operation successful",
-    error: "An error occurred",
+    pageTitle: "Bienvenido a nuestro Sitio Web",
+    title: "¡Hola, Mundo!",
+    description: "Este es un ejemplo de internacionalización.",
+    variable: "Estado de la operación: {status}",
+    success: "Éxito",
+    switchLanguage: "Cambiar a {language}",
+    spanish: "Español",
+    english: "Inglés",
+    footer: "© 2024 Nuestra Empresa",
   },
-  // Añade aquí cualquier otra propiedad que tu tipo Translations requiera
 };
 
 export default defaultTranslations;

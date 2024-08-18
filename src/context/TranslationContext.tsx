@@ -1,4 +1,4 @@
-// context/TranslationContext.tsx
+// src/context/TranslationContext.tsx
 
 "use client";
 import React, {
@@ -10,12 +10,10 @@ import React, {
   useMemo,
 } from "react";
 import { getCookie, setCookie } from "cookies-next";
+import { Translations } from "@/types/translations"; // Asegúrate de que esta importación sea correcta
+import defaultTranslations from "@/lib/utils/defaultTranslations";
 
 type Locale = "en" | "es";
-
-interface Translations {
-  [key: string]: string | Translations;
-}
 
 interface TranslationsContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
@@ -61,7 +59,7 @@ export function TranslationsProvider({
       } catch (error) {
         console.error("Error loading translations:", error);
         setIsLoading(false);
-        return {};
+        return defaultTranslations;
       }
     },
     []
@@ -91,7 +89,7 @@ export function TranslationsProvider({
     ) {
       setLocale(savedLocale);
     }
-  }, []);
+  }, [locale, setLocale]);
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
