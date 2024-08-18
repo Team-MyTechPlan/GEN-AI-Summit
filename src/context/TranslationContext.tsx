@@ -49,6 +49,7 @@ export function TranslationsProvider({
     async (locale: Locale): Promise<Translations> => {
       setIsLoading(true);
       try {
+        console.log("Loading translations for locale:", locale);
         const response = await fetch(`/api/translations?lang=${locale}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

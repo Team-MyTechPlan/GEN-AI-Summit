@@ -1,3 +1,4 @@
+"use server";
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import getTranslationFilePath from "@/lib/getTranslations";
