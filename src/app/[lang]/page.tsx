@@ -3,7 +3,7 @@ import { LanguageSwitchButton } from "@/components/shared/LanguageSwitchButton";
 import { useTranslations } from "@/context/TranslationContext";
 
 export default function HomePage() {
-  const { t,  } = useTranslations();
+  const { t } = useTranslations();
 
   return (
     <div>
