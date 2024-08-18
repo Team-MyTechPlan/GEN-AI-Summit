@@ -1,43 +1,23 @@
-"use client";
-import { useEffect } from "react";
-import { useLanguageStore } from "@/hooks/useLanguageStore";
-import { TranslationProvider } from "@/context/TranslationContext";
-import { getCookie } from "cookies-next";
-import { LanguageSwitchButton } from "@/components/shared/LanguageSwitchButton";
+// app/layout.tsx
+import { TranslationsProvider } from "@/context/TranslationContext";
+import { getTranslations } from "@/lib/getTranslations";
 
-async function loadTranslations(locale: string) {
-  try {
-    const translations = await import(`@/locales/${locale}/common.json`);
-    return translations.default;
-  } catch (error) {
-    console.error(`Failed to load translations for ${locale}:`, error);
-    return {};
-  }
-}
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { locale, setLocale } = useLanguageStore();
-
-  useEffect(() => {
-    const savedLocale = getCookie("NEXT_LOCALE") as "en" | "es" | undefined;
-    if (savedLocale && (savedLocale === "en" || savedLocale === "es")) {
-      setLocale(savedLocale);
-    }
-  }, [setLocale]);
+  const initialTranslations = await getTranslations("es");
 
   return (
-    <html lang={locale}>
+    <html lang="es">
       <body>
-        <TranslationProvider loadTranslations={loadTranslations}>
-          <header>
-            <LanguageSwitchButton />
-          </header>
-          <main>{children}</main>
-        </TranslationProvider>
+        <TranslationsProvider
+          initialLocale="es"
+          initialTranslations={initialTranslations}
+        >
+          {children}
+        </TranslationsProvider>
       </body>
     </html>
   );

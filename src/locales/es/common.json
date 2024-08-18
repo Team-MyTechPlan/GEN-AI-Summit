@@ -1,4 +1,9 @@
 {
+  "Common": {
+    "switchLanguage": "Switch to {language}",
+    "spanish": "Spanish",
+    "english": "English"
+  },
   "NotFound": {
     "title": "Página no encontrada",
     "description": "La página que buscas no existe."

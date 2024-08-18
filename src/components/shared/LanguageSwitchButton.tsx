@@ -1,30 +1,31 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useLanguageStore } from "@/hooks/useLanguageStore";
-import { useEffect } from "react";
 import { useTranslations } from "@/context/TranslationContext";
-import { setCookie } from "cookies-next";
+import React from "react";
 
-// Componente de cambio de idioma
 export const LanguageSwitchButton: React.FC = () => {
-  const { locale, setLocale } = useLanguageStore();
-  const router = useRouter();
-  const t = useTranslations();
+  const { t, locale } = useTranslations();
 
   const handleLanguageChange = () => {
     const newLocale = locale === "en" ? "es" : "en";
-    setLocale(newLocale);
-    setCookie("NEXT_LOCALE", newLocale, { maxAge: 365 * 24 * 60 * 60 });
 
-    // Actualiza la URL y recarga la página
-    router.push(`/${newLocale}`);
-    window.location.href = `/${newLocale}`; // Redirige a la nueva URL
+    // Construir la nueva URL
+    const currentPath = window.location.pathname;
+    const newPath =
+      currentPath.startsWith("/en") || currentPath.startsWith("/es")
+        ? `/${newLocale}${currentPath.substring(3)}`
+        : `/${newLocale}${currentPath}`;
+
+    // Forzar una recarga completa de la página con la nueva URL
+    window.location.href = `${window.location.origin}${newPath}`;
   };
 
   return (
-    <button onClick={handleLanguageChange}>
-      {t("Home.switchLanguage", {
-        language: locale === "en" ? t("Home.spanish") : t("Home.english"),
+    <button
+      onClick={handleLanguageChange}
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+    >
+      {t("Common.switchLanguage", {
+        language: locale === "en" ? t("Common.spanish") : t("Common.english"),
       })}
     </button>
   );
