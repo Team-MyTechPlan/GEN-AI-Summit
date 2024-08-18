@@ -9,5 +9,13 @@ const nextConfig = {
       { hostname: "drive.google.com" },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      require("fs").cpSync("src/locales", "public/locales", {
+        recursive: true,
+      });
+    }
+    return config;
+  },
 };
 export default nextConfig;
