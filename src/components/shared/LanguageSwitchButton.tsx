@@ -1,32 +1,33 @@
 "use client";
 import { useTranslations } from "@/context/TranslationContext";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export const LanguageSwitchButton: React.FC = () => {
-  const { t, locale } = useTranslations();
+  const pathname = usePathname();
+  const [locale, setLocale] = useState("es");
+
+  const t = useTranslations("Common");
+
+  useEffect(() => {
+    const pathLocale = pathname.split("/")[1];
+    if (pathLocale === "en" || pathLocale === "es") {
+      setLocale(pathLocale);
+    }
+  }, [pathname]);
 
   const handleLanguageChange = () => {
     const newLocale = locale === "en" ? "es" : "en";
-
-    // Construir la nueva URL
-    const currentPath = window.location.pathname;
-    const newPath =
-      currentPath.startsWith("/en") || currentPath.startsWith("/es")
-        ? `/${newLocale}${currentPath.substring(3)}`
-        : `/${newLocale}${currentPath}`;
-
-    // Forzar una recarga completa de la página con la nueva URL
+    const newPath = `/${newLocale}${pathname.substring(3)}`;
     window.location.href = `${window.location.origin}${newPath}`;
   };
 
   return (
-    <button
-      onClick={handleLanguageChange}
-      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-    >
-      {t("Common.switchLanguage", {
-        language: locale === "en" ? t("Common.spanish") : t("Common.english"),
+    <Button onClick={handleLanguageChange} variant="default">
+      {t("switchLanguage", {
+        language: locale === "en" ? t("spanish") : t("english"),
       })}
-    </button>
+    </Button>
   );
 };

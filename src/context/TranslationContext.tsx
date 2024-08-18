@@ -1,5 +1,3 @@
-// src/context/TranslationContext.tsx
-
 "use client";
 import React, {
   createContext,
@@ -10,13 +8,17 @@ import React, {
   useMemo,
 } from "react";
 import { getCookie, setCookie } from "cookies-next";
-import { Translations } from "@/types/translations"; // Asegúrate de que esta importación sea correcta
-import defaultTranslations from "@/locales/es/common.json"; // Asegúrate de que esta importación sea correcta
+import { Translations } from "@/types/translations";
+import defaultTranslations from "@/locales/es/common.json";
 
 type Locale = "en" | "es";
 
 interface TranslationsContextType {
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: (
+    key: string,
+    params?: Record<string, string | number>,
+    namespace?: string
+  ) => string;
   locale: Locale;
   setLocale: (locale: Locale) => Promise<void>;
   isLoading: boolean;
@@ -93,21 +95,26 @@ export function TranslationsProvider({
   }, [locale, setLocale]);
 
   const t = useCallback(
-    (key: string, params?: Record<string, string | number>): string => {
-      const keys = key.split(".");
+    (
+      key: string,
+      params?: Record<string, string | number>,
+      namespace?: string
+    ): string => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const keys = fullKey.split(".");
       let current: any = translations;
 
       for (const k of keys) {
         if (current[k] === undefined) {
-          console.warn(`Translation key not found: ${key}`);
-          return key;
+          console.warn(`Translation key not found: ${fullKey}`);
+          return fullKey;
         }
         current = current[k];
       }
 
       if (typeof current !== "string") {
-        console.warn(`Invalid translation key: ${key}`);
-        return key;
+        console.warn(`Invalid translation key: ${fullKey}`);
+        return fullKey;
       }
 
       if (params) {
@@ -140,12 +147,18 @@ export function TranslationsProvider({
   );
 }
 
-export function useTranslations() {
+export function useTranslations(namespace?: string) {
   const context = useContext(TranslationsContext);
   if (context === undefined) {
     throw new Error(
       "useTranslations must be used within a TranslationsProvider"
     );
   }
-  return context;
+
+  if (namespace) {
+    return (key: string, params?: Record<string, string | number>) =>
+      context.t(key, params, namespace);
+  }
+
+  return context.t;
 }
