@@ -1,7 +1,6 @@
-// src/app/api/translations/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
-import path from "path";
+import { getTranslationFilePath } from "@/lib/getTranslations";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -12,13 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const filePath = path.join(
-      process.cwd(),
-      "src",
-      "locales",
-      lang,
-      "common.json"
-    );
+    const filePath = getTranslationFilePath(lang);
     const fileContents = await fs.readFile(filePath, "utf8");
     const translations = JSON.parse(fileContents);
     return NextResponse.json(translations);

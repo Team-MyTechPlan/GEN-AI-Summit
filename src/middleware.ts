@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Translations } from "@/types/translations";
-import defaultTranslations from "./lib/utils/defaultTranslations";
 
 const DEFAULT_LOCALE = "es";
 const SUPPORTED_LOCALES = ["es", "en"];
