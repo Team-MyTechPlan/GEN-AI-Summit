@@ -5,8 +5,9 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useMemo,
 } from "react";
-import { getCookie } from "cookies-next";
+import { getCookie, setCookie } from "cookies-next";
 
 type Locale = "en" | "es";
 
@@ -18,6 +19,7 @@ interface TranslationsContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
   locale: Locale;
   setLocale: (locale: Locale) => Promise<void>;
+  isLoading: boolean;
 }
 
 const TranslationsContext = createContext<TranslationsContextType | undefined>(
@@ -30,6 +32,9 @@ interface TranslationsProviderProps {
   initialTranslations: Translations;
 }
 
+const COOKIE_NAME = "NEXT_LOCALE";
+const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year
+
 export function TranslationsProvider({
   children,
   initialLocale,
@@ -38,25 +43,22 @@ export function TranslationsProvider({
   const [translations, setTranslations] =
     useState<Translations>(initialTranslations);
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
-
-  useEffect(() => {
-    const savedLocale = getCookie("NEXT_LOCALE") as Locale | undefined;
-    if (savedLocale && (savedLocale === "en" || savedLocale === "es")) {
-      setLocaleState(savedLocale);
-      loadTranslations(savedLocale).then(setTranslations);
-    }
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadTranslations = useCallback(
     async (locale: Locale): Promise<Translations> => {
+      setIsLoading(true);
       try {
         const response = await fetch(`/api/translations?lang=${locale}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch translations");
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return await response.json();
+        const data = await response.json();
+        setIsLoading(false);
+        return data;
       } catch (error) {
         console.error("Error loading translations:", error);
+        setIsLoading(false);
         return {};
       }
     },
@@ -69,15 +71,24 @@ export function TranslationsProvider({
         const newTranslations = await loadTranslations(newLocale);
         setTranslations(newTranslations);
         setLocaleState(newLocale);
-        // Optionally, you can set a cookie or use localStorage here to persist the language preference
+        setCookie(COOKIE_NAME, newLocale, {
+          maxAge: COOKIE_MAX_AGE,
+          path: "/",
+        });
       }
     },
     [locale, loadTranslations]
   );
 
   useEffect(() => {
-    // Optionally, you can load the initial locale from a cookie or localStorage here
-    // and call setLocale if it's different from the initialLocale
+    const savedLocale = getCookie(COOKIE_NAME) as Locale | undefined;
+    if (
+      savedLocale &&
+      (savedLocale === "en" || savedLocale === "es") &&
+      savedLocale !== locale
+    ) {
+      setLocale(savedLocale);
+    }
   }, []);
 
   const t = useCallback(
@@ -111,11 +122,15 @@ export function TranslationsProvider({
     [translations]
   );
 
-  const contextValue = {
-    t,
-    locale,
-    setLocale,
-  };
+  const contextValue = useMemo(
+    () => ({
+      t,
+      locale,
+      setLocale,
+      isLoading,
+    }),
+    [t, locale, setLocale, isLoading]
+  );
 
   return (
     <TranslationsContext.Provider value={contextValue}>

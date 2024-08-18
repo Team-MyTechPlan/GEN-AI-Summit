@@ -1,20 +1,31 @@
-// app/api/translations/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { getTranslations } from '@/lib/getTranslations';
+// pages/api/translations.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import fs from "fs/promises";
+import path from "path";
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const lang = searchParams.get('lang');
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const { lang } = req.query;
 
-  if (!lang || !['en', 'es'].includes(lang)) {
-    return NextResponse.json({ error: 'Invalid language' }, { status: 400 });
+  if (typeof lang !== "string" || !["en", "es"].includes(lang)) {
+    return res.status(400).json({ error: "Invalid language" });
   }
 
   try {
-    const translations = await getTranslations(lang);
-    return NextResponse.json(translations);
+    const filePath = path.join(
+      process.cwd(),
+      "src",
+      "locales",
+      lang,
+      "common.json"
+    );
+    const fileContents = await fs.readFile(filePath, "utf8");
+    const translations = JSON.parse(fileContents);
+    res.status(200).json(translations);
   } catch (error) {
-    console.error('Failed to load translations:', error);
-    return NextResponse.json({ error: 'Failed to load translations' }, { status: 500 });
+    console.error("Failed to load translations:", error);
+    res.status(500).json({ error: "Failed to load translations" });
   }
 }
