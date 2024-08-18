@@ -2,7 +2,10 @@
   "Common": {
     "switchLanguage": "Switch to {language}",
     "spanish": "Español",
-    "english": "Inglés"
+    "english": "Inglés",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   },
   "NotFound": {
     "title": "Page not found",
