@@ -11,7 +11,7 @@ import React, {
 } from "react";
 import { getCookie, setCookie } from "cookies-next";
 import { Translations } from "@/types/translations"; // Asegúrate de que esta importación sea correcta
-import defaultTranslations from "@/lib/utils/defaultTranslations";
+import defaultTranslations from "@/locales/es/common.json"; // Asegúrate de que esta importación sea correcta
 
 type Locale = "en" | "es";
 
