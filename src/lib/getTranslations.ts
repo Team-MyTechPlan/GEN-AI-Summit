@@ -10,6 +10,7 @@ export async function getTranslations(lang: string = "es") {
 
 export default function getTranslationFilePath(locale: string): string {
   const isProduction = process.env.NODE_ENV === "production";
+  // Utilizamos process.cwd() para obtener la ruta actual de trabajo
   if (isProduction) {
     return path.join(process.cwd(), "public", "locales", locale, "common.json");
   } else {
