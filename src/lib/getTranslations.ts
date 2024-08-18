@@ -8,7 +8,7 @@ export async function getTranslations(lang: string = "es") {
   return JSON.parse(fileContents);
 }
 
-export function getTranslationFilePath(locale: string): string {
+export default function getTranslationFilePath(locale: string): string {
   const isProduction = process.env.NODE_ENV === "production";
   if (isProduction) {
     return path.join(process.cwd(), "public", "locales", locale, "common.json");

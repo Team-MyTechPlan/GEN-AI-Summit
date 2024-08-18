@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
-import { getTranslationFilePath } from "@/lib/getTranslations";
+import getTranslationFilePath from "@/lib/getTranslations";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
